@@ -5,6 +5,13 @@ using System.Collections.Generic;
 public class InputManager : MonoBehaviour
 {
     public List<Unit> selectedUnits;
+    public Transform testunit;
+
+    private Vector3 startPoint;
+    private Vector3 endPoint;
+
+    private Vector3 center;
+    private Vector3 halfExtends;
 
     void Update()
     {
@@ -32,6 +39,44 @@ public class InputManager : MonoBehaviour
                     DeselectAllUnits();
                 }
             }
+
+            RaycastHit hit;
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            if (Physics.Raycast(ray, out hit, Mathf.Infinity))
+            {
+                startPoint = hit.point;
+                startPoint.y = 0;
+            }
+        }
+
+        if (Input.GetMouseButton(0))
+        {
+            RaycastHit hit;
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            if (Physics.Raycast(ray, out hit, Mathf.Infinity))
+            {
+                endPoint = hit.point;
+                endPoint.y = 0;
+            }
+
+            center = (endPoint + startPoint) / 2;
+            halfExtends = new Vector3(Mathf.Abs(endPoint.x - center.x), 10, Mathf.Abs(endPoint.z - center.z));
+
+            Vector3 collisionSize = halfExtends;
+            collisionSize.y = 0.3f;
+            collisionSize.x = Mathf.Abs(collisionSize.x);
+            collisionSize.z = Mathf.Abs(collisionSize.z);
+
+            collisionSize *= 2;
+
+            testunit.localScale = collisionSize;
+            testunit.position = center;
+        }
+
+        if (Input.GetMouseButtonUp(0))
+        {
+            SelectArea(center, halfExtends);
+            testunit.localScale = Vector3.zero;
         }
 
         if (Input.GetMouseButtonDown(1))
@@ -76,6 +121,19 @@ public class InputManager : MonoBehaviour
         {
             selectedUnits.Add(selectedUnit);
             selectedUnit.Enable();
+        }
+    }
+
+    void SelectArea(Vector3 center, Vector3 halfExtends)
+    {
+        DeselectAllUnits();
+        Collider[] collidedUnits = Physics.OverlapBox(center, halfExtends);
+        foreach (var collision in collidedUnits)
+        {
+            if (collision.GetComponent<Unit>())
+            {
+                SelectUnit(collision.GetComponent<Unit>());
+            }
         }
     }
 
