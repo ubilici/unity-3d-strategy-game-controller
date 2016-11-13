@@ -9,6 +9,7 @@ public class Unit : MonoBehaviour
 
     public float unitMoveSpeed;
     public float unitAttackSpeed;
+    public float unitAttackRange;
     public float unitAttackDamage;
 
     private bool moveSequence;
@@ -28,16 +29,37 @@ public class Unit : MonoBehaviour
         }
     }
 
-    public void Move(Vector3 _targetPos)
+    public void Move(Vector3 targetPos)
     {
-        targetPosition = _targetPos + new Vector3(0, transform.position.y);
+        targetPos.y = transform.position.y;
+        targetPosition = targetPos;
         moveSequence = true;
         unitState = UnitState.Move;
     }
 
-    void Attack()
+    public void Attack(Unit targetUnit)
     {
+        Stop();
+        float distanceBetweenUnits = Vector3.Distance(targetUnit.transform.position, transform.position);
+        if (unitAttackRange > distanceBetweenUnits)
+        {
+            Debug.Log("Attack");
+        }
+        else
+        {
+            Vector3 vectorBetweenUnits = targetUnit.transform.position - transform.position;
+            vectorBetweenUnits /= distanceBetweenUnits;
+            vectorBetweenUnits *= (distanceBetweenUnits - unitAttackRange);
 
+            Move(transform.position + vectorBetweenUnits);
+        }
+    }
+
+    public void Stop()
+    {
+        targetPosition = transform.position;
+        moveSequence = false;
+        unitState = UnitState.Idle;
     }
 
     public void Enable()

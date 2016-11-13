@@ -5,7 +5,7 @@ using System.Collections.Generic;
 public class InputManager : MonoBehaviour
 {
     public List<Unit> selectedUnits;
-    public Transform testunit;
+    public Transform collisionIndicator;
 
     private Vector3 startPoint;
     private Vector3 endPoint;
@@ -53,6 +53,7 @@ public class InputManager : MonoBehaviour
         {
             RaycastHit hit;
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+
             if (Physics.Raycast(ray, out hit, Mathf.Infinity))
             {
                 endPoint = hit.point;
@@ -62,35 +63,58 @@ public class InputManager : MonoBehaviour
             center = (endPoint + startPoint) / 2;
             halfExtends = new Vector3(Mathf.Abs(endPoint.x - center.x), 10, Mathf.Abs(endPoint.z - center.z));
 
-            Vector3 collisionSize = halfExtends;
-            collisionSize.y = 0.3f;
-            collisionSize.x = Mathf.Abs(collisionSize.x);
-            collisionSize.z = Mathf.Abs(collisionSize.z);
-
-            collisionSize *= 2;
-
-            testunit.localScale = collisionSize;
-            testunit.position = center;
+            SetCollisionIndicatorSize(halfExtends);
         }
 
         if (Input.GetMouseButtonUp(0))
         {
-            SelectArea(center, halfExtends);
-            testunit.localScale = Vector3.zero;
+            if (startPoint.x - endPoint.x != 0 && startPoint.z - endPoint.z != 0)
+            {
+                SelectArea(center, halfExtends);
+            }
+
+            collisionIndicator.localScale = Vector3.zero;
+            startPoint = Vector3.zero;
+            endPoint = Vector3.zero;
         }
 
         if (Input.GetMouseButtonDown(1))
         {
-            RaycastHit hit;
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            if (Physics.Raycast(ray, out hit, Mathf.Infinity))
+            Transform selectedTransform = DetectObject().transform;
+            if (selectedTransform.GetComponent<Unit>())
             {
-                if(selectedUnits.Count != 0)
+                if (selectedTransform.GetComponent<Unit>().unitFaction == UnitFaction.Enemy)
                 {
-                    foreach (Unit unit in selectedUnits)
+                    foreach (Unit selectedUnit in selectedUnits)
                     {
-                        unit.Move(hit.point);
+                        selectedUnit.Attack(selectedTransform.GetComponent<Unit>());
                     }
+                }
+            }
+            else
+            {
+                RaycastHit hit;
+                Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                if (Physics.Raycast(ray, out hit, Mathf.Infinity))
+                {
+                    if (selectedUnits.Count != 0)
+                    {
+                        foreach (Unit unit in selectedUnits)
+                        {
+                            unit.Move(hit.point);
+                        }
+                    }
+                }
+            }
+        }
+
+        if (Input.GetKeyDown(KeyCode.S))
+        {
+            if(selectedUnits.Count > 0)
+            {
+                foreach (Unit selectedUnit in selectedUnits)
+                {
+                    selectedUnit.Stop();
                 }
             }
         }
@@ -122,6 +146,18 @@ public class InputManager : MonoBehaviour
             selectedUnits.Add(selectedUnit);
             selectedUnit.Enable();
         }
+    }
+
+    void SetCollisionIndicatorSize(Vector3 indicatorSize)
+    {
+        indicatorSize.y = 0.3f;
+        indicatorSize.x = Mathf.Abs(indicatorSize.x);
+        indicatorSize.z = Mathf.Abs(indicatorSize.z);
+
+        indicatorSize *= 2;
+
+        collisionIndicator.localScale = indicatorSize;
+        collisionIndicator.position = center;
     }
 
     void SelectArea(Vector3 center, Vector3 halfExtends)
