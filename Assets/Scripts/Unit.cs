@@ -12,6 +12,8 @@ public class Unit : MonoBehaviour
     public float unitAttackRange;
     public float unitAttackDamage;
 
+    public GameObject unitBorder;
+
     private float rotateSpeed = 4;
     private bool moveSequence;
     private Vector3 targetPosition;
@@ -76,12 +78,12 @@ public class Unit : MonoBehaviour
 
     public void Enable()
     {
-        GetComponent<MeshRenderer>().material.color = Color.green;
+        unitBorder.SetActive(true);
     }
 
     public void Disable()
     {
-        GetComponent<MeshRenderer>().material.color = Color.black;
+        unitBorder.SetActive(false);
     }
 
     IEnumerator LookSequence(Vector3 targetPos)

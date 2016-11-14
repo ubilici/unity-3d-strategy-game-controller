@@ -68,7 +68,7 @@ public class InputManager : MonoBehaviour
 
         if (Input.GetMouseButtonUp(0))
         {
-            if (startPoint.x - endPoint.x != 0 && startPoint.z - endPoint.z != 0)
+            if (Mathf.Abs(startPoint.x - endPoint.x) > 0.05 && Mathf.Abs(startPoint.z - endPoint.z) > 0.05)
             {
                 SelectArea(center, halfExtends);
             }
