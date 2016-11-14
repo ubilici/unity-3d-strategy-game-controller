@@ -12,8 +12,11 @@ public class Unit : MonoBehaviour
     public float unitAttackRange;
     public float unitAttackDamage;
 
+    private float rotateSpeed = 4;
     private bool moveSequence;
     private Vector3 targetPosition;
+
+    private Coroutine lookRoutine;
 
     void FixedUpdate()
     {
@@ -31,10 +34,14 @@ public class Unit : MonoBehaviour
 
     public void Move(Vector3 targetPos)
     {
+        Stop();
+
         targetPos.y = transform.position.y;
         targetPosition = targetPos;
         moveSequence = true;
         unitState = UnitState.Move;
+
+        lookRoutine = StartCoroutine(LookSequence(targetPos));
     }
 
     public void Attack(Unit targetUnit)
@@ -60,6 +67,11 @@ public class Unit : MonoBehaviour
         targetPosition = transform.position;
         moveSequence = false;
         unitState = UnitState.Idle;
+
+        if (lookRoutine != null)
+        {
+            StopCoroutine(lookRoutine);
+        }
     }
 
     public void Enable()
@@ -70,6 +82,22 @@ public class Unit : MonoBehaviour
     public void Disable()
     {
         GetComponent<MeshRenderer>().material.color = Color.black;
+    }
+
+    IEnumerator LookSequence(Vector3 targetPos)
+    {
+        Quaternion startRotation = transform.rotation;
+
+        Vector3 lookDirection = targetPos - transform.position;
+        lookDirection.y = 0;
+
+        Quaternion lookRotation = Quaternion.LookRotation(lookDirection);
+
+        for (float i = 0; i <= 1; i += Time.deltaTime * rotateSpeed)
+        {
+            transform.rotation = Quaternion.Slerp(startRotation, lookRotation, i);
+            yield return null;
+        }
     }
 }
 
