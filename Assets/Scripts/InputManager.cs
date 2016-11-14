@@ -87,7 +87,7 @@ public class InputManager : MonoBehaviour
                 {
                     foreach (Unit selectedUnit in selectedUnits)
                     {
-                        selectedUnit.Attack(selectedTransform.GetComponent<Unit>());
+                        selectedUnit.SelectTarget(selectedTransform.GetComponent<Unit>());
                     }
                 }
             }

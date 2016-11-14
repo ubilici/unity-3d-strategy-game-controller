@@ -8,17 +8,25 @@ public class Unit : MonoBehaviour
     public UnitFaction unitFaction;
 
     public float unitMoveSpeed;
-    public float unitAttackSpeed;
+    public float unitAttackCooldown;
     public float unitAttackRange;
     public float unitAttackDamage;
 
     public GameObject unitBorder;
+    public GameObject weapon;
 
+    private Unit targetEnemy;
     private float rotateSpeed = 4;
-    private bool moveSequence;
     private Vector3 targetPosition;
-
+    private bool moveSequence;
+    private bool attackSequence;
+    private float attackCooldown;
     private Coroutine lookRoutine;
+
+    void Start()
+    {
+        attackCooldown = unitAttackCooldown;
+    }
 
     void FixedUpdate()
     {
@@ -26,10 +34,24 @@ public class Unit : MonoBehaviour
         {
             transform.position = Vector3.MoveTowards(transform.position, targetPosition, Time.deltaTime * unitMoveSpeed);
 
-            if(transform.position == targetPosition)
+            if (transform.position == targetPosition)
             {
                 unitState = UnitState.Idle;
+                if (attackSequence)
+                {
+                    Attack(targetEnemy);
+                }
                 moveSequence = false;
+            }
+        }
+
+        attackCooldown += Time.deltaTime;
+        if (attackCooldown > unitAttackCooldown)
+        {
+            if (attackSequence)
+            {
+                Attack(targetEnemy);
+                attackCooldown = 0;
             }
         }
     }
@@ -46,35 +68,77 @@ public class Unit : MonoBehaviour
         lookRoutine = StartCoroutine(LookSequence(targetPos));
     }
 
-    public void Attack(Unit targetUnit)
+    void AttackMove(Vector3 targetPos)
     {
-        Stop();
+        targetPos.y = transform.position.y;
+        targetPosition = targetPos;
+        moveSequence = true;
+        unitState = UnitState.Move;
+
+        lookRoutine = StartCoroutine(LookSequence(targetPos));
+    }
+
+    public void SelectTarget(Unit targetUnit)
+    {
+        targetEnemy = targetUnit;
+        attackSequence = true;
+    }
+
+    void Attack(Unit targetUnit)
+    {
+        StopMove();
+
+        lookRoutine = StartCoroutine(LookSequence(targetEnemy.transform.position));
+
+        targetEnemy = targetUnit;
         float distanceBetweenUnits = Vector3.Distance(targetUnit.transform.position, transform.position);
+        attackSequence = true;
+
         if (unitAttackRange > distanceBetweenUnits)
         {
-            Debug.Log("Attack");
+            if (unitAttackType == UnitAttackType.Ranged)
+            {
+                weapon.GetComponent<RangedWeapon>().Shoot(targetUnit.transform.position);
+            }
+            attackCooldown = 0;
         }
         else
         {
             Vector3 vectorBetweenUnits = targetUnit.transform.position - transform.position;
             vectorBetweenUnits /= distanceBetweenUnits;
-            vectorBetweenUnits *= (distanceBetweenUnits - unitAttackRange);
+            vectorBetweenUnits *= (distanceBetweenUnits - unitAttackRange + 0.5f);
 
-            Move(transform.position + vectorBetweenUnits);
+            AttackMove(transform.position + vectorBetweenUnits);
         }
     }
 
     public void Stop()
     {
-        targetPosition = transform.position;
-        moveSequence = false;
-        unitState = UnitState.Idle;
+        StopAttack();
+        StopMove();
 
         if (lookRoutine != null)
         {
             StopCoroutine(lookRoutine);
         }
     }
+
+    void StopAttack()
+    {
+        targetEnemy = null;
+        attackSequence = false;
+
+        unitState = UnitState.Idle;
+    }
+
+    void StopMove()
+    {
+        targetPosition = transform.position;
+        moveSequence = false;
+
+        unitState = UnitState.Idle;
+    }
+
 
     public void Enable()
     {
