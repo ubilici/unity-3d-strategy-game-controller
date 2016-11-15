@@ -104,7 +104,11 @@ public class Unit : MonoBehaviour
 
         if (unitAttackType == UnitAttackType.Ranged)
         {
-            weapon.GetComponent<RangedWeapon>().Shoot(targetEnemy.transform.position);
+            weapon.GetComponent<Weapon>().Shoot(targetEnemy.transform.position);
+        }
+        else if (unitAttackType == UnitAttackType.Melee)
+        {
+            weapon.GetComponent<Weapon>().Stab();
         }
         attackCooldown = 0;
     }
