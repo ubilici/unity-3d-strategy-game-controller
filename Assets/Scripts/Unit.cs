@@ -14,6 +14,7 @@ public class Unit : MonoBehaviour
 
     public GameObject unitBorder;
     public GameObject weapon;
+    public GameObject healthBar;
 
     private Unit targetEnemy;
     private float rotateSpeed = 4;
@@ -142,11 +143,13 @@ public class Unit : MonoBehaviour
     public void Enable()
     {
         unitBorder.SetActive(true);
+        healthBar.GetComponent<HealthBar>().Enable();
     }
 
     public void Disable()
     {
         unitBorder.SetActive(false);
+        healthBar.GetComponent<HealthBar>().Disable();
     }
 
     void Look(Vector3 targetPos)

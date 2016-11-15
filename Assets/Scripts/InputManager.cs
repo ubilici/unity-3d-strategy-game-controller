@@ -81,29 +81,32 @@ public class InputManager : MonoBehaviour
         if (Input.GetMouseButtonDown(1))
         {
             Transform selectedTransform = DetectObject().transform;
-            if (selectedTransform.GetComponent<Unit>())
+            if (selectedTransform != null)
             {
-                if (selectedTransform.GetComponent<Unit>().unitFaction == UnitFaction.Enemy)
+                if (selectedTransform.GetComponent<Unit>())
                 {
-                    foreach (Unit selectedUnit in selectedUnits)
-                    {
-                        selectedUnit.Stop();
-                        selectedUnit.SelectTarget(selectedTransform.GetComponent<Unit>());
-                    }
-                }
-            }
-            else
-            {
-                RaycastHit hit;
-                Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-                if (Physics.Raycast(ray, out hit, Mathf.Infinity))
-                {
-                    if (selectedUnits.Count != 0)
+                    if (selectedTransform.GetComponent<Unit>().unitFaction == UnitFaction.Enemy)
                     {
                         foreach (Unit selectedUnit in selectedUnits)
                         {
                             selectedUnit.Stop();
-                            selectedUnit.Move(hit.point);
+                            selectedUnit.SelectTarget(selectedTransform.GetComponent<Unit>());
+                        }
+                    }
+                }
+                else
+                {
+                    RaycastHit hit;
+                    Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                    if (Physics.Raycast(ray, out hit, Mathf.Infinity))
+                    {
+                        if (selectedUnits.Count != 0)
+                        {
+                            foreach (Unit selectedUnit in selectedUnits)
+                            {
+                                selectedUnit.Stop();
+                                selectedUnit.Move(hit.point);
+                            }
                         }
                     }
                 }
