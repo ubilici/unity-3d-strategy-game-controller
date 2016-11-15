@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -87,6 +87,7 @@ public class InputManager : MonoBehaviour
                 {
                     foreach (Unit selectedUnit in selectedUnits)
                     {
+                        selectedUnit.Stop();
                         selectedUnit.SelectTarget(selectedTransform.GetComponent<Unit>());
                     }
                 }
@@ -99,9 +100,10 @@ public class InputManager : MonoBehaviour
                 {
                     if (selectedUnits.Count != 0)
                     {
-                        foreach (Unit unit in selectedUnits)
+                        foreach (Unit selectedUnit in selectedUnits)
                         {
-                            unit.Move(hit.point);
+                            selectedUnit.Stop();
+                            selectedUnit.Move(hit.point);
                         }
                     }
                 }

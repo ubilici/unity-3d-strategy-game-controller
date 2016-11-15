@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 
 public class Unit : MonoBehaviour
@@ -17,43 +17,55 @@ public class Unit : MonoBehaviour
 
     private Unit targetEnemy;
     private float rotateSpeed = 4;
-    private Vector3 targetPosition;
-    private bool moveSequence;
-    private bool attackSequence;
     private float attackCooldown;
+    private bool attackAfterMove;
+    private Vector3 targetPosition;
     private Coroutine lookRoutine;
 
     void Start()
     {
         attackCooldown = unitAttackCooldown;
+        attackAfterMove = false;
     }
 
     void FixedUpdate()
     {
-        if (moveSequence)
+        if (unitState == UnitState.Move)
         {
             transform.position = Vector3.MoveTowards(transform.position, targetPosition, Time.deltaTime * unitMoveSpeed);
 
             if (transform.position == targetPosition)
             {
                 unitState = UnitState.Idle;
-                if (attackSequence)
+                if (attackAfterMove)
                 {
-                    Attack(targetEnemy);
+                    unitState = UnitState.Attack;
                 }
-                moveSequence = false;
+            }
+        }
+
+        if (unitState == UnitState.Attack)
+        {
+            float distanceBetweenUnits = Vector3.Distance(targetEnemy.transform.position, transform.position);
+
+            if (unitAttackRange > distanceBetweenUnits)
+            {
+                if (attackCooldown >= unitAttackCooldown)
+                {
+                    Attack();
+                }
+            }
+            else
+            {
+                Vector3 vectorBetweenUnits = targetEnemy.transform.position - transform.position;
+                vectorBetweenUnits /= distanceBetweenUnits;
+                vectorBetweenUnits *= (distanceBetweenUnits - unitAttackRange + 0.5f);
+
+                AttackMove(transform.position + vectorBetweenUnits);
             }
         }
 
         attackCooldown += Time.deltaTime;
-        if (attackCooldown > unitAttackCooldown)
-        {
-            if (attackSequence)
-            {
-                Attack(targetEnemy);
-                attackCooldown = 0;
-            }
-        }
     }
 
     public void Move(Vector3 targetPos)
@@ -62,81 +74,64 @@ public class Unit : MonoBehaviour
 
         targetPos.y = transform.position.y;
         targetPosition = targetPos;
-        moveSequence = true;
         unitState = UnitState.Move;
 
-        lookRoutine = StartCoroutine(LookSequence(targetPos));
+        Look(targetPos);
     }
 
     void AttackMove(Vector3 targetPos)
     {
+        StopMove();
+
         targetPos.y = transform.position.y;
         targetPosition = targetPos;
-        moveSequence = true;
         unitState = UnitState.Move;
+        attackAfterMove = true;
 
-        lookRoutine = StartCoroutine(LookSequence(targetPos));
+        Look(targetPos);
     }
 
     public void SelectTarget(Unit targetUnit)
     {
         targetEnemy = targetUnit;
-        attackSequence = true;
+        Look(targetEnemy.transform.position);
+        unitState = UnitState.Attack;
     }
 
-    void Attack(Unit targetUnit)
+    void Attack()
     {
-        StopMove();
+        Look(targetEnemy.transform.position);
 
-        lookRoutine = StartCoroutine(LookSequence(targetEnemy.transform.position));
-
-        targetEnemy = targetUnit;
-        float distanceBetweenUnits = Vector3.Distance(targetUnit.transform.position, transform.position);
-        attackSequence = true;
-
-        if (unitAttackRange > distanceBetweenUnits)
+        if (unitAttackType == UnitAttackType.Ranged)
         {
-            if (unitAttackType == UnitAttackType.Ranged)
-            {
-                weapon.GetComponent<RangedWeapon>().Shoot(targetUnit.transform.position);
-            }
-            attackCooldown = 0;
+            weapon.GetComponent<RangedWeapon>().Shoot(targetEnemy.transform.position);
         }
-        else
-        {
-            Vector3 vectorBetweenUnits = targetUnit.transform.position - transform.position;
-            vectorBetweenUnits /= distanceBetweenUnits;
-            vectorBetweenUnits *= (distanceBetweenUnits - unitAttackRange + 0.5f);
-
-            AttackMove(transform.position + vectorBetweenUnits);
-        }
+        attackCooldown = 0;
     }
 
     public void Stop()
     {
         StopAttack();
         StopMove();
-
-        if (lookRoutine != null)
-        {
-            StopCoroutine(lookRoutine);
-        }
     }
 
     void StopAttack()
     {
         targetEnemy = null;
-        attackSequence = false;
-
         unitState = UnitState.Idle;
+
+        attackAfterMove = false;
     }
 
     void StopMove()
     {
         targetPosition = transform.position;
-        moveSequence = false;
-
         unitState = UnitState.Idle;
+
+        if (lookRoutine != null)
+        {
+            StopCoroutine(lookRoutine);
+        }
     }
 
 
@@ -148,6 +143,16 @@ public class Unit : MonoBehaviour
     public void Disable()
     {
         unitBorder.SetActive(false);
+    }
+
+    void Look(Vector3 targetPos)
+    {
+        if (lookRoutine != null)
+        {
+            StopCoroutine(lookRoutine);
+        }
+
+        lookRoutine = StartCoroutine(LookSequence(targetPos));
     }
 
     IEnumerator LookSequence(Vector3 targetPos)
